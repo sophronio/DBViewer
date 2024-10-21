@@ -9,7 +9,7 @@ node_modules
 /coverage
 
 # productioan
-/build
+/client/build
 
 # misc
 .DS_Store
@@ -24,3 +24,5 @@ yarn-error.log*
 client/node_modules
 server/node_modules
 .env
+.vscode/
+client/.prettierrc

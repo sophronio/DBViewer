@@ -1,0 +1,35 @@
+.login-container {
+    max-width: 400px; /* Max width for the form */
+    margin: auto; /* Center the form horizontally */
+    padding: 20px;
+    background-color: white; /* White background for the form */
+    border-radius: 5px; /* Rounded corners */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+}
+
+form {
+    display: flex;
+    flex-direction: column; /* Stack form elements vertically */
+}
+
+input[type="text"],
+input[type="password"] {
+    margin-bottom: 15px; /* Space between inputs */
+    padding: 10px; /* Padding for inputs */
+    border: 1px solid #d1d5db; /* Border for inputs */
+    border-radius: 5px; /* Rounded corners */
+}
+
+button {
+    background-color: #3b82f6; /* Blue button */
+    color: white; /* White text */
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease; /* Smooth transition for hover effect */
+}
+
+button:hover {
+    background-color: #2563eb; /* Darker blue on hover */
+}

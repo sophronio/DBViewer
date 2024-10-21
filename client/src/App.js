@@ -1,32 +1,23 @@
-import logo from './logo.svg';
-import './App.css';
-import axios from 'axios';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Login from './components/Login';
+import Dashboard from './components/Dashboard';
+import './styles/App.css';
 
-function App() {
-  const apiCall = () => {
-    axios.get('http://localhost:8080').then((data) => {
-     console.log(data)
-    })
-  }
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-        <button onClick={apiCall}>Make API</button>
-      </header>
-    </div>
-  );
-}
+const App = () => {
+    return (
+        <Router>
+            <div className="App">
+                <Routes>
+                    {/* Route for login */}
+                    <Route path="/login" element={<Login />} />
+
+                    {/* Route for dashboard */}
+                    <Route path="/" element={<Dashboard />} />
+                </Routes>
+            </div>
+        </Router>
+    );
+};
 
 export default App;

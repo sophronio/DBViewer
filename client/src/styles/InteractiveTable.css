@@ -1,0 +1,40 @@
+.table-container {
+    background-color: white; /* White background for the table */
+    border-radius: 20px; /* Rounded corners */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+    overflow: scroll; /* Prevents overflowing content */
+    height: auto;
+    padding: 0 10px 10px 10px;
+}
+
+/* .table-auto { */
+/* width: 100%; Full width table */
+/* border-collapse: collapse; Collapse borders */
+/* } */
+
+th,
+td {
+    padding: 10px; /* Padding for table cells */
+    text-align: left; /* Align text to the left */
+    border-right: 1px solid black;
+}
+
+th {
+    background-color: #f3f4f6; /* Light gray background for header */
+    font-weight: bold; /* Bold text for headers */
+    border-right: 1px solid black;
+}
+Table thead {
+    position: sticky;
+    top: 0px;
+    /* margin: 0 0 0 0; */
+    width: 100%;
+}
+/* 
+th {
+    width: auto;
+} */
+
+tr {
+    border: 1px solid black;
+}
