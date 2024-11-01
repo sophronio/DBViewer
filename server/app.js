@@ -7,6 +7,8 @@ const cors = require('cors');
 const tableRoutes = require('./routes/tables');
 const rowRoutes = require('./routes/rows');
 const updateRoutes = require('./routes/updates');
+const newColumnRoutes = require('./routes/newColumns');
+const sqlTypes = require('./routes/sqlTypes');
 
 const app = express();
 
@@ -18,6 +20,8 @@ app.use(cors());
 app.use('/tables', tableRoutes);
 app.use('/table', rowRoutes);
 app.use('/updates', updateRoutes);
+app.use('/add-column', newColumnRoutes);
+app.use('/types', sqlTypes);
 
 // Error handling for routes not found
 app.use((req, res) => {

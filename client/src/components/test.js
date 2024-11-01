@@ -13,20 +13,20 @@ const InteractiveTable = ({
     // loading + error
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    // useRef to store original rows (so it doesn't trigger a re-render)
+    const originalRowsRef = useRef([]);
+
     const [totalResults, setTotalResults] = useState(0);
     const [isEditing, setIsEditing] = useState(false);
 
     // rows + add rows
     const [rows, setRows] = useState([]);
     const [editedRows, setEditedRows] = useState({});
-    // const [newRows, setNewRows] = useState({});
+    const [newRows, setNewRows] = useState({});
 
     // columns
     const [columns, setColumns] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
-
-    // useRef to store original rows (so it doesn't trigger a re-render)
-    const originalRowsRef = useRef([]);
 
     // gets table data
     useEffect(() => {
@@ -39,9 +39,9 @@ const InteractiveTable = ({
             setTotalResults,
             setLoading,
             setError,
-            originalRowsRef
+            originalRowsRef.current
         );
-        setIsEditing(false); // stop editing when user changes table
+        setIsEditing(false);
     }, [tableName, totalResults, limit, offset]);
 
     // Get the primary key
@@ -55,19 +55,18 @@ const InteractiveTable = ({
     // Edit button click
     const handleEdit = () => {
         setIsEditing(true);
-        // const initialEditedRows = rows.reduce((acc, row) => {
-        //     acc[row[primaryKey]] = { ...row };
-        //     return acc;
-        // }, {});
-        // setEditedRows(initialEditedRows);
+        const initialEditedRows = rows.reduce((acc, row) => {
+            acc[row[primaryKey]] = { ...row };
+            return acc;
+        }, {});
+        setEditedRows(initialEditedRows);
     };
 
     // Cancel edits and revert the table to the original rows
     const handleCancel = () => {
         setIsEditing(false);
         setEditedRows({}); // Clear edited rows
-        // setNewRows({});
-        console.log(originalRowsRef);
+        setNewRows({});
         setRows([...originalRowsRef.current]); // Reset rows to original data from ref
     };
 
@@ -131,7 +130,7 @@ const InteractiveTable = ({
                 setTotalResults,
                 setLoading,
                 setError,
-                originalRowsRef
+                originalRowsRef.current
             );
             setIsEditing(false);
             setEditedRows({});
@@ -142,9 +141,9 @@ const InteractiveTable = ({
     };
 
     const handleAddRow = () => {
-        // const newRowData = { [primaryKey]: '', ...newRows };
-        // setRows([...rows, newRowData]);
-        // setNewRows({});
+        const newRowData = { [primaryKey]: '', ...newRows };
+        setRows([...rows, newRowData]);
+        setNewRows({});
     };
 
     const handleAddColumn = (newColumn, newColumnType, newColumnSize) => {
@@ -169,7 +168,7 @@ const InteractiveTable = ({
             setTotalResults,
             setLoading,
             setError,
-            originalRowsRef
+            originalRowsRef.current
         );
         handleCloseModal();
     };

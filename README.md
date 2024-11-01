@@ -31,11 +31,18 @@ As an admin, I want to be able to  -->
   - Good question, I think we'll need a roles / users / administration table of some sort with records and stuff
 - Will the user need to access multiple databases?
 
+# Additional Features:
+
+- [] Pop-up on Save to make sure the user is about to save
+- [] Pop-up on Cancel to make sure user knows their changes are about to disappear
+- [] Pop-up on leave page to let user know changes will be cancelled
+
 # User Stories MVP:
 
 1. As a basic user, I want to be able to see the list of tables that I have access to
 2. As a basic user, I want to be able to edit the rows, columns, and values of that table
 3. As a basic user, I want to be able to save my changes
+4. As a basic user, I want to be able to search through the rows using a searchbar to get to the correct row quickly
 
 # Back-End Tasks
 

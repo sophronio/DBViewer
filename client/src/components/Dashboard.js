@@ -30,11 +30,11 @@ const Dashboard = () => {
         );
     };
     return (
-        <div className="dashboard-container flex">
+        <div class="dashboard-container flex">
             <Sidebar onComponentChange={handleComponentChange} />
 
             {activeComponent !== '' ? (
-                <div className="content-area flex-1 p-4">
+                <div class="content-area flex-1 p-4">
                     <InteractiveTable
                         key={limit + offset}
                         tableName={activeComponent}
@@ -49,7 +49,7 @@ const Dashboard = () => {
                     />
                 </div>
             ) : (
-                <div className="content-area flex-1 p-4">
+                <div class="content-area flex-1 p-4">
                     <p>Pick a table to get started</p>
                 </div>
             )}

@@ -2,20 +2,20 @@
 const { poolPromise, mssql } = require('../config/dbConfig');
 const allowedTables = ['Users', 'Activities', 'Records', 'Profile'];
 
-// // Infers the SQL data type based on the JavaScript value type
-// const inferSQLType = (value) => {
-//     if (typeof value === 'number' && Number.isInteger(value)) {
-//         return mssql.Int;
-//     } else if (typeof value === 'number') {
-//         return mssql.Float;
-//     } else if (typeof value === 'boolean') {
-//         return mssql.Bit;
-//     } else if (value instanceof Date) {
-//         return mssql.DateTime;
-//     } else {
-//         return mssql.NVarChar; // Default to string
-//     }
-// };
+// Infers the SQL data type based on the JavaScript value type
+const inferSQLType = (value) => {
+    if (typeof value === 'number' && Number.isInteger(value)) {
+        return mssql.Int;
+    } else if (typeof value === 'number') {
+        return mssql.Float;
+    } else if (typeof value === 'boolean') {
+        return mssql.Bit;
+    } else if (value instanceof Date) {
+        return mssql.DateTime;
+    } else {
+        return mssql.NVarChar; // Default to string
+    }
+};
 
 // Helper function to validate the table name
 const validateTableName = async (tableName) => {
@@ -103,7 +103,12 @@ const sendUpdates = async (req, res) => {
         const request = pool.request();
         // Bind the column values to the query to prevent SQL injection
         columns.forEach((col, idx) => {
-            request.input(`value${idx}`, mssql.NVarChar, values[idx]); // Dynamically bind values based on column types
+            console.log(values[idx]);
+            request.input(
+                `value${idx}`,
+                inferSQLType(values[idx]),
+                values[idx]
+            ); // Dynamically bind values based on column types
         });
 
         request.input('primaryKeyValue', mssql.Int, primaryKeyValue); // Primary key value
