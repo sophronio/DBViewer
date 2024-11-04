@@ -19,7 +19,7 @@ const InteractiveTable = ({
     // rows + add rows
     const [rows, setRows] = useState([]);
     const [editedRows, setEditedRows] = useState({});
-    // const [newRows, setNewRows] = useState({});
+    const [newRows, setNewRows] = useState([]);
 
     // columns
     const [columns, setColumns] = useState([]);
@@ -54,6 +54,7 @@ const InteractiveTable = ({
 
     // Edit button click
     const handleEdit = () => {
+        setNewRows([]);
         setIsEditing(true);
         // const initialEditedRows = rows.reduce((acc, row) => {
         //     acc[row[primaryKey]] = { ...row };
@@ -66,20 +67,26 @@ const InteractiveTable = ({
     const handleCancel = () => {
         setIsEditing(false);
         setEditedRows({}); // Clear edited rows
-        // setNewRows({});
         console.log(originalRowsRef);
         setRows([...originalRowsRef.current]); // Reset rows to original data from ref
+        setNewRows([]);
     };
 
     // Handle value input
-    const handleInputChange = (e, rowId, column) => {
-        setEditedRows((prevEditedRows) => ({
-            ...prevEditedRows,
-            [rowId]: {
-                ...prevEditedRows[rowId],
-                [column]: e.target.value,
-            },
-        }));
+    const handleInputChange = (e, rowId, column, isNewRow = false) => {
+        if (isNewRow) {
+            const updatedNewRows = [...newRows];
+            updatedNewRows[rowId][column] = e.target.value;
+            setNewRows(updatedNewRows);
+        } else {
+            setEditedRows((prevEditedRows) => ({
+                ...prevEditedRows,
+                [rowId]: {
+                    ...prevEditedRows[rowId],
+                    [column]: e.target.value,
+                },
+            }));
+        }
 
         // Reflect the edits in the table visually without modifying the originalRowsRef
         setRows((prevRows) =>
@@ -119,8 +126,27 @@ const InteractiveTable = ({
             // Send all updates in parallel
             await Promise.all(updates);
 
-            // const newRows = Object.entries(newRows).map()
-
+            console.log(newRows);
+            newRows.forEach((newRow) => {
+                const filteredColumns = Object.keys(newRow).filter(
+                    (column) => column !== primaryKey
+                );
+                const filteredValues = filteredColumns.map(
+                    (column) => newRow[column]
+                );
+                axios
+                    .post('http://localhost:8080/add-row', {
+                        tableName,
+                        columns: filteredColumns,
+                        values: filteredValues,
+                    })
+                    .then((response) =>
+                        console.log('New row inserted', response)
+                    );
+            });
+            setIsEditing(false);
+            setEditedRows({});
+            setNewRows([]);
             // Refetch fresh data from db
             fetchData(
                 tableName,
@@ -133,8 +159,6 @@ const InteractiveTable = ({
                 setError,
                 originalRowsRef
             );
-            setIsEditing(false);
-            setEditedRows({});
         } catch (error) {
             console.error('Error saving data:', error);
             setError('Error saving data');
@@ -142,9 +166,13 @@ const InteractiveTable = ({
     };
 
     const handleAddRow = () => {
-        // const newRowData = { [primaryKey]: '', ...newRows };
-        // setRows([...rows, newRowData]);
-        // setNewRows({});
+        // Add an empty row object with keys from columns and empty values
+        const emptyRow = columns.reduce(
+            (acc, col) => ({ ...acc, [col]: '' }),
+            {}
+        );
+        setNewRows([...newRows, emptyRow]);
+        setIsEditing(true);
     };
 
     const handleAddColumn = (newColumn, newColumnType, newColumnSize) => {
@@ -258,6 +286,34 @@ const InteractiveTable = ({
                                 ))}
                             </tr>
                         ))}
+                        {/* Render new rows when in editing mode */}
+                        {isEditing &&
+                            newRows.map((newRow, newRowIndex) => (
+                                <tr
+                                    class="bg-gray-100 border border-black"
+                                    key={`new-row-${newRowIndex}`}
+                                >
+                                    {columns.map((column) => (
+                                        <td
+                                            class="px-6 py-4 border-r border-black"
+                                            key={`${column}-${newRowIndex}`}
+                                        >
+                                            <input
+                                                type="text"
+                                                value={newRow[column] || ''}
+                                                onChange={(e) =>
+                                                    handleInputChange(
+                                                        e,
+                                                        newRowIndex,
+                                                        column,
+                                                        true
+                                                    )
+                                                }
+                                            />
+                                        </td>
+                                    ))}
+                                </tr>
+                            ))}
                     </tbody>
                     {isEditing && (
                         <tfoot>
