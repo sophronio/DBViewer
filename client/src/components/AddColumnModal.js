@@ -18,16 +18,13 @@ const AddColumnModal = ({ onClose, onAddColumn }) => {
         const selectedType = e.target.value;
         setNewColumnType(selectedType);
         setAvailableOptions([]);
-        console.log(typeof selectedType);
         // // Find the selected type's size options (if any) and update sizeOptions
         const typesWithSize = Object.keys(sizeOptions);
 
-        console.log('type w/ size', typesWithSize);
         const selectedTypeDetails = typesWithSize.find(
             (type) => type === selectedType
         );
-        console.log(selectedTypeDetails);
-        console.log(sizeOptions[selectedTypeDetails]);
+
         if (selectedTypeDetails && sizeOptions[selectedTypeDetails]) {
             setAvailableOptions(sizeOptions[selectedTypeDetails]);
         } else {

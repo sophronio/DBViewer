@@ -1,26 +1,9 @@
 // controllers/rowsController.js
 const { poolPromise, mssql } = require('../config/dbConfig');
+const { validateTableName } = require('./utils');
+
 // Function to validate table names against the database
-const validateTableName = async (tableName) => {
-    try {
-        const pool = await poolPromise;
-        const request = pool.request();
 
-        // Using .input() to bind the tableName parameter
-        request.input('tableName', mssql.NVarChar, tableName);
-
-        const result = await request.query(`
-        SELECT TABLE_NAME 
-        FROM INFORMATION_SCHEMA.TABLES
-        WHERE TABLE_NAME = @tableName;
-      `);
-
-        return result.recordset.length > 0; // Return true if the table exists, false otherwise
-    } catch (err) {
-        console.error('Error validating table name:', err.message);
-        return false;
-    }
-};
 const getRowsFromTable = async (req, res) => {
     const { tableName } = req.params;
     const limit = parseInt(req.query.limit) || 10;
@@ -28,10 +11,7 @@ const getRowsFromTable = async (req, res) => {
 
     try {
         // Validate the table name
-        const isValidTable = await validateTableName(tableName);
-        if (!isValidTable) {
-            return res.status(400).send(`Invalid table name: ${tableName}`);
-        }
+        await validateTableName(tableName);
 
         // Step 1: Get the primary key column(s) for the table using a parameterized query
         const pool = await poolPromise; // Use the connection pool
@@ -72,7 +52,6 @@ const getRowsFromTable = async (req, res) => {
         OFFSET @offset ROWS
         FETCH NEXT @limit ROWS ONLY;
       `);
-
         res.json({
             rows: rowsResult.recordset,
             totalCount,

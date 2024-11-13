@@ -34,8 +34,14 @@ const PageSelector = ({ totalResults, onPageChange }) => {
     return (
         <div class="page-selector">
             <div>
-                <label htmlFor="limit">Results per page: </label>
-                <select id="limit" value={limit} onChange={handleLimitChange}>
+                <label class="dark:text-gray-100" htmlFor="limit">
+                    Results per page:{' '}
+                </label>
+                <select
+                    id="dark:text-black limit"
+                    value={limit}
+                    onChange={handleLimitChange}
+                >
                     <option value={5}>5</option>
                     <option value={10}>10</option>
                     <option value={20}>20</option>
@@ -45,21 +51,21 @@ const PageSelector = ({ totalResults, onPageChange }) => {
 
             <div>
                 <button
-                    class="page-selector-btn pr-1"
+                    class="dark:bg-gray-700 dark:text-gray-100 page-selector-btn pr-1"
                     onClick={() => handlePageChange(page - 1)}
                     disabled={page === 1}
                 >
                     Previous
                 </button>
 
-                <span class="page-number">
+                <span class="dark:text-gray-100 page-number">
                     Page {page} of {totalPages}
                 </span>
 
                 <button
-                    class="page-selector-btn pl-1"
+                    class="dark:bg-gray-700 dark:text-gray-100 page-selector-btn pl-1"
                     onClick={() => handlePageChange(page + 1)}
-                    disabled={page === totalPages}
+                    disabled={totalPages === 0 || page === totalPages}
                 >
                     Next
                 </button>

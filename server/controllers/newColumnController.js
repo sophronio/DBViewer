@@ -31,7 +31,6 @@ const addColumn = async (req, res) => {
             columnSize.includes('Scale')
         ) {
             const sizeArray = columnSize.split(',');
-            console.log(sizeArray.length);
             columnDefinition += `(${parseInt(sizeArray[1])}, ${parseInt(sizeArray[4])})`;
         } else if (columnSize && columnSize.includes('Precision')) {
             const sizeArray = columnSize.split(',');

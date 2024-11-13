@@ -56,7 +56,6 @@ const sendUpdates = async (req, res) => {
         const request = pool.request();
         // Bind the column values to the query to prevent SQL injection
         columns.forEach((col, idx) => {
-            console.log(values[idx]);
             request.input(
                 `value${idx}`,
                 inferSQLType(values[idx]),
@@ -65,20 +64,12 @@ const sendUpdates = async (req, res) => {
         });
 
         request.input('primaryKeyValue', mssql.Int, primaryKeyValue); // Primary key value
-        console.log(
-            'tableName:',
-            tableName,
-            'setClauses:',
-            setClauses,
-            'primaryKey:',
-            primaryKey
-        );
+
         const query = `
               UPDATE ${tableName}
               SET ${setClauses}
               WHERE ${primaryKey} = @primaryKeyValue
           `;
-        console.log();
         await request.query(query);
 
         // Step 6: Send success response

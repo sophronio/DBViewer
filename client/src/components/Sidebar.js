@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import '../styles/Sidebar.css';
 import axios from 'axios';
+import { useDarkMode } from '../DarkModeContext';
 
 const Sidebar = ({ onComponentChange }) => {
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+
+    const { darkMode, toggleDarkMode } = useDarkMode();
 
     useEffect(() => {
         const fetchData = async () => {
@@ -32,20 +35,33 @@ const Sidebar = ({ onComponentChange }) => {
     }
 
     return (
-        <div class="sidebar bg-gray-200 p-4 w-1/4">
-            <h2 class="text-xl font-bold">Sidebar</h2>
-            <ul class="space-y-4">
-                {data.map((name) => (
-                    <li>
-                        <button
-                            class="btn"
-                            onClick={() => onComponentChange(name)}
-                        >
-                            {name}
-                        </button>
-                    </li>
-                ))}
-            </ul>
+        <div class="h-screen flex">
+            <div class="flex flex-col justify-between w-64 bg-gray-200 dark:bg-gray-800 p-4">
+                <div>
+                    <h2 class="dark:text-gray-100 text-xl font-bold mb-4">
+                        Sidebar
+                    </h2>
+                    <ul>
+                        {data.map((name) => (
+                            <li key={name} class="mb-2">
+                                <button
+                                    class="btn w-full text-left"
+                                    onClick={() => onComponentChange(name)}
+                                >
+                                    {name}
+                                </button>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+
+                <button
+                    onClick={toggleDarkMode}
+                    class="mt-auto rounded bg-gray-300 dark:bg-gray-700 text-gray-900 dark:text-gray-100 p-2"
+                >
+                    {darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                </button>
+            </div>
         </div>
     );
 };

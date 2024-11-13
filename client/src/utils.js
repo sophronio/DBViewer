@@ -10,25 +10,51 @@ export async function fetchData(
     setTotalResults,
     setLoading,
     setError,
-    originalRowsRef
+    originalRowsRef,
+    searchQuery
 ) {
     try {
-        const response = await axios.get(
-            `http://localhost:8080/table/${tableName}`,
-            {
-                params: {
-                    limit: limit,
-                    offset: offset,
-                },
-            }
-        );
-        setRows(response.data.rows);
-        setColumns(Object.keys(response.data.rows[0]));
-        setTotalResults(response.data.totalCount);
+        if (
+            searchQuery !== '' &&
+            searchQuery !== undefined &&
+            searchQuery !== null
+        ) {
+            const response = await axios.get(
+                `http://localhost:8080/search/${tableName}`,
+                {
+                    params: {
+                        query: searchQuery,
+                        limit: limit,
+                        offset: offset,
+                    },
+                }
+            );
+            setRows(response.data.rows);
+            if (response.data.rows.length > 0)
+                setColumns(Object.keys(response.data.rows[0]));
+            setTotalResults(response.data.totalCount);
+            // } else if (originalRowsRef.current && originalRowsRef.current.length) {
+            //     setRows(originalRowsRef.current);
+            //     setColumns(Object.keys(originalRowsRef.current[0]));
+        } else {
+            const response = await axios.get(
+                `http://localhost:8080/table/${tableName}`,
+                {
+                    params: {
+                        limit: limit,
+                        offset: offset,
+                    },
+                }
+            );
+
+            setRows(response.data.rows);
+            setColumns(Object.keys(response.data.rows[0]));
+            setTotalResults(response.data.totalCount);
+            originalRowsRef.current = response.data.rows;
+        }
+
         setLoading(false);
         setError(null);
-        originalRowsRef.current = response.data.rows;
-        console.log(originalRowsRef.current);
     } catch (err) {
         setError(err.message);
         setLoading(false);
@@ -49,8 +75,6 @@ export async function fetchSqlTypes(setSqlTypes, setSizeOptions) {
         const response = await axios.get('http://localhost:8080/types');
         setSqlTypes(response.data.types);
         setSizeOptions(response.data.sizeOptions);
-        console.log(response.data.types);
-        console.log(response.data.sizeOptions);
     } catch (error) {
         console.error('Error fetching SQL types:', error);
     }

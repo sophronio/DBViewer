@@ -1,6 +1,12 @@
 const sqlKeywords = require('mssql').TYPES; // Use SQL keywords list from `mssql` package
 const { poolPromise, mssql } = require('../config/dbConfig');
 const allowedTables = ['Users', 'Activities', 'Records', 'Profile'];
+// const allowedTables = [
+//     'CloudCost',
+//     'AroEnvLookup',
+//     'ServiceTypeLookup',
+//     'Crosswalk',
+// ];
 
 // Helper function to validate and transform column names
 function validateAndTransformColumnName(columnName) {
@@ -34,20 +40,26 @@ const validateTableName = async (tableName) => {
         throw new Error('Invalid table name');
     }
 
-    // Optionally, add a database-level validation if the whitelist is dynamic
-    const pool = await poolPromise;
-    const request = pool.request();
-    const result = await request.input('tableName', mssql.NVarChar, tableName)
-        .query(`
-        SELECT TABLE_NAME
-        FROM INFORMATION_SCHEMA.TABLES
-        WHERE TABLE_NAME = @tableName
-    `);
+    try {
+        const pool = await poolPromise;
+        const request = pool.request();
 
-    if (result.recordset.length === 0) {
-        throw new Error('Table not found in the database');
+        // Using .input() to bind the tableName parameter
+        request.input('tableName', mssql.NVarChar, tableName);
+
+        const result = await request.query(`
+        SELECT TABLE_NAME 
+        FROM INFORMATION_SCHEMA.TABLES
+        WHERE TABLE_NAME = @tableName;
+      `);
+
+        if (result.recordset.length === 0) {
+            throw new Error('Table not found in the database');
+        }
+        return true;
+    } catch (err) {
+        console.error('Error validating table name:', err.message);
     }
-    return true;
 };
 
 // Helper function to validate columns against the given table

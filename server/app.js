@@ -10,7 +10,7 @@ const updateRoutes = require('./routes/updates');
 const newColumnRoutes = require('./routes/newColumns');
 const sqlTypes = require('./routes/sqlTypes');
 const newRowRoutes = require('./routes/newRows');
-
+const searchRoutes = require('./routes/searches');
 const app = express();
 
 app.use(bodyParser.json());
@@ -24,6 +24,7 @@ app.use('/updates', updateRoutes);
 app.use('/add-column', newColumnRoutes);
 app.use('/add-row', newRowRoutes);
 app.use('/types', sqlTypes);
+app.use('/search', searchRoutes);
 
 // Error handling for routes not found
 app.use((req, res) => {
