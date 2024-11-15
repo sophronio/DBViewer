@@ -11,7 +11,10 @@ const Dashboard = () => {
     const [offset, setOffset] = useState(0);
     const [totalResults, setTotalResults] = useState(0);
     const [searchQuery, setSearchQuery] = useState(''); // New state for search query
-
+    // // Whenever totalResults changes, propagate it up to the parent
+    // useEffect(() => {
+    //     onTotalResultsChange(totalResults); // Propagate the totalResults to the parent
+    // }, [totalResults, ]);
     // Handle component change from sidebar clicks
     const handleComponentChange = (componentName) => {
         setActiveComponent(componentName);
@@ -19,31 +22,40 @@ const Dashboard = () => {
         setOffset(0);
         setSearchQuery(''); // Clear the search query when switching components
     };
+
     // Callback function to receive totalResults from InteractiveTable
     const handleTotalResults = (newTotalResults) => {
         setTotalResults(newTotalResults);
     };
 
+    // useEffect(() => {
+    //     console.log('Total Results updated:', totalResults);
+    // }, [totalResults]);
+
     const handlePageChange = (newLimit, newOffset) => {
         setLimit(newLimit);
         setOffset(newOffset);
-        // Trigger data fetch or update based on new limit and offset
-        console.log(
-            `Fetching ${newLimit} results starting from offset ${newOffset}`
-        );
+        // console.log(
+        //     `Fetching ${newLimit} results starting from offset ${newOffset}`
+        // );
     };
 
     const handleSearch = (query) => {
         setSearchQuery(query);
         setOffset(0); // Reset offset to 0 when a new search is performed
     };
+
     return (
-        <div class="dashboard-container flex bg-gray-300 dark:bg-gray-900">
+        <div className="dashboard-container flex bg-gray-300 dark:bg-gray-900">
             <Sidebar onComponentChange={handleComponentChange} />
 
             {activeComponent !== '' ? (
-                <div class="content-area flex-1 p-4">
-                    <SearchBar onSearch={handleSearch} />
+                <div className="content-area flex-1 p-4">
+                    <SearchBar
+                        query={searchQuery}
+                        onSearch={handleSearch}
+                        onQueryChange={setSearchQuery}
+                    />
                     <InteractiveTable
                         key={limit + offset}
                         tableName={activeComponent}
@@ -53,13 +65,12 @@ const Dashboard = () => {
                         searchQuery={searchQuery} // Pass search query to the table
                     />
                     <PageSelector
-                        //key={totalResults}
                         totalResults={totalResults}
                         onPageChange={handlePageChange}
                     />
                 </div>
             ) : (
-                <div class="content-area flex-1 p-4 text-gray-900 dark:text-gray-100">
+                <div className="content-area flex-1 p-4 flex items-center justify-center text-gray-900 dark:text-gray-100 h-screen">
                     <p>Pick a table to get started</p>
                 </div>
             )}

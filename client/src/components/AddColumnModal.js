@@ -44,29 +44,31 @@ const AddColumnModal = ({ onClose, onAddColumn }) => {
 
     return (
         <div class="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center z-50">
-            <div class="bg-white rounded-lg shadow-lg w-1/3 p-6">
-                <h2 class="text-2xl font-semibold mb-4">Add New Column</h2>
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg w-1/3 p-6">
+                <h2 class="text-2xl dark:text-gray-100 font-semibold mb-4">
+                    Add New Column
+                </h2>
                 <form onSubmit={handleSubmit}>
                     <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
                             Column Name:
                         </label>
                         <input
                             type="text"
                             value={newColumn}
                             onChange={(e) => setNewColumn(e.target.value)}
-                            class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3"
+                            class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 dark:bg-gray-700 dark:text-gray-100"
                             required
                         />
                     </div>
                     <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
                             Column Type:
                         </label>
                         <select
                             value={newColumnType}
                             onChange={handleColumnTypeChange}
-                            class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3"
+                            class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 dark:bg-gray-700 dark:text-gray-100"
                             required
                         >
                             <option value="">Select Type</option>
@@ -87,7 +89,7 @@ const AddColumnModal = ({ onClose, onAddColumn }) => {
                                 onChange={(e) =>
                                     setNewColumnSize(e.target.value)
                                 }
-                                class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3"
+                                class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 dark:text-gray-100 dark:bg-gray-700"
                             >
                                 <option value="">Select Size</option>
                                 {availableOptions.map((size) => (

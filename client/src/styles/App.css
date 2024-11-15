@@ -1,11 +1,30 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,100;1,200;1,300;1,400;1,500;1,600;1,700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* In your global CSS or Tailwind CSS file */
+.fade-in {
+    @apply opacity-0 transition-opacity duration-75 ease-in;
+}
+
+.fade-in-active {
+    @apply opacity-100;
+}
+
+.fade-out {
+    @apply opacity-100 transition-opacity duration-75 ease-out;
+}
+
+.fade-out-active {
+    @apply opacity-0;
+}
+
 /* Additional global styles can go here */
 
-body {
+/* body {
     margin: 0;
     font-family: Arial, sans-serif;
-    background-color: #f9fafb; /* Light gray background */
-}
+    background-color: #f9fafb; 
+} */

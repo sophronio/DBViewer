@@ -3,6 +3,10 @@ import { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 import { fetchData, getPrimaryKey, getDefaultColumnValue } from '../utils.js';
 import AddColumnModal from './AddColumnModal';
+import InteractiveTableSkeleton from './InteractiveTableSkeleton';
+import SaveConfirmationModal from './SaveConfirmationModal';
+import CancelConfirmationModal from './CancelConfirmationModal';
+import { FaRegSquarePlus } from 'react-icons/fa6';
 
 const InteractiveTable = ({
     tableName,
@@ -14,7 +18,6 @@ const InteractiveTable = ({
     // loading + error
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [totalResults, setTotalResults] = useState(0);
     const [isEditing, setIsEditing] = useState(false);
 
     // rows + add rows
@@ -29,6 +32,36 @@ const InteractiveTable = ({
     // useRef to store original rows (so it doesn't trigger a re-render)
     const originalRowsRef = useRef([]);
 
+    // save & cancel modal
+    const [showSaveModal, setShowSaveModal] = useState(false);
+    const [showCancelModal, setShowCancelModal] = useState(false);
+    const [isUnsavedChanges, setIsUnsavedChanges] = useState(false); // Track unsaved changes
+
+    // Detect unsaved changes
+    useEffect(() => {
+        setIsUnsavedChanges(
+            Object.keys(editedRows).length > 0 || newRows.length > 0
+        );
+    }, [editedRows, newRows]);
+
+    // Warn user on page refresh or tab close
+    useEffect(() => {
+        const handleBeforeUnload = (event) => {
+            if (isUnsavedChanges) {
+                const message =
+                    'You have unsaved changes. If you leave, your changes will be lost.';
+                event.returnValue = message; // Standard for most browsers
+                return message; // For some browsers like Chrome
+            }
+        };
+
+        window.addEventListener('beforeunload', handleBeforeUnload);
+
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+        };
+    }, [isUnsavedChanges]);
+
     // search querying
     // const [isSearching, setIsSearching] = useState(false);
     // gets table data
@@ -39,24 +72,17 @@ const InteractiveTable = ({
             offset,
             setRows,
             setColumns,
-            setTotalResults,
+            onTotalResultsChange,
             setLoading,
             setError,
             originalRowsRef,
-            // isSearching,
             searchQuery
         );
         setIsEditing(false); // stop editing when user changes table
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [searchQuery, limit, offset, tableName]);
+    }, [searchQuery, limit, offset, tableName, onTotalResultsChange]);
 
     // Get the primary key
     const primaryKey = rows.length > 0 ? getPrimaryKey(columns) : null;
-
-    // Whenever totalResults changes, propagate it up to the parent
-    useEffect(() => {
-        onTotalResultsChange(totalResults); // Propagate the totalResults to the parent
-    }, [totalResults, onTotalResultsChange]);
 
     // Edit button click
     const handleEdit = () => {
@@ -71,10 +97,19 @@ const InteractiveTable = ({
 
     // Cancel edits and revert the table to the original rows
     const handleCancel = () => {
+        if (isUnsavedChanges) {
+            setShowCancelModal(true);
+        } else {
+            confirmCancel();
+        }
+    };
+
+    const confirmCancel = () => {
         setIsEditing(false);
-        setEditedRows({}); // Clear edited rows
-        setRows([...originalRowsRef.current]); // Reset rows to original data from ref
+        setEditedRows({});
+        setRows([...originalRowsRef.current]);
         setNewRows([]);
+        setShowCancelModal(false);
     };
 
     // Handle value input
@@ -103,9 +138,14 @@ const InteractiveTable = ({
         );
     };
 
+    const handleSave = () => {
+        setShowSaveModal(true);
+    };
+
     // Save edits to database + any new rows
-    const handleSave = async () => {
+    const confirmSave = async () => {
         try {
+            console.log(editedRows);
             const updates = Object.entries(editedRows).map(
                 ([rowId, updatedRow]) => {
                     if (columns.includes('updated_at')) {
@@ -131,41 +171,43 @@ const InteractiveTable = ({
             // Send all updates in parallel
             await Promise.all(updates);
 
-            newRows.forEach((newRow) => {
+            const newRowUpdates = newRows.map((newRow) => {
                 const filteredColumns = Object.keys(newRow).filter(
                     (column) => column !== primaryKey
                 );
                 const filteredValues = filteredColumns.map(
                     (column) => newRow[column]
                 );
-                axios
-                    .post('http://localhost:8080/add-row', {
-                        tableName,
-                        columns: filteredColumns,
-                        values: filteredValues,
-                    })
-                    .then((response) =>
-                        console.log('New row inserted', response)
-                    );
+                return axios.post('http://localhost:8080/add-row', {
+                    tableName,
+                    columns: filteredColumns,
+                    values: filteredValues,
+                });
             });
-            setIsEditing(false);
-            setEditedRows({});
-            setNewRows([]);
-            // Refetch fresh data from db
-            fetchData(
+
+            await Promise.all(newRowUpdates);
+            await fetchData(
                 tableName,
                 limit,
                 offset,
                 setRows,
                 setColumns,
-                setTotalResults,
+                onTotalResultsChange,
                 setLoading,
                 setError,
                 originalRowsRef
             );
+            console.log('data refetched?');
+
+            setIsEditing(false);
+            setEditedRows({});
+            setNewRows([]);
+            // Refetch fresh data from db
         } catch (error) {
             console.error('Error saving data:', error);
             setError('Error saving data');
+        } finally {
+            setShowSaveModal(false);
         }
     };
 
@@ -179,25 +221,25 @@ const InteractiveTable = ({
         setIsEditing(true);
     };
 
-    const handleAddColumn = (newColumn, newColumnType, newColumnSize) => {
+    const handleAddColumn = async (newColumn, newColumnType, newColumnSize) => {
         const updatedRows = rows.map((row) => ({
             ...row,
             [newColumn]: getDefaultColumnValue(newColumnType),
         }));
         setRows(updatedRows);
-        axios.post('http://localhost:8080/add-column', {
+        await axios.post('http://localhost:8080/add-column', {
             tableName,
             columnName: newColumn,
             columnType: newColumnType,
             columnSize: newColumnSize,
         });
-        fetchData(
+        await fetchData(
             tableName,
             limit,
             offset,
             setRows,
             setColumns,
-            setTotalResults,
+            onTotalResultsChange,
             setLoading,
             setError,
             originalRowsRef
@@ -214,173 +256,211 @@ const InteractiveTable = ({
         setIsModalOpen(false);
     };
 
-    if (loading) {
-        return <p class="dark:text-gray-100"> Loading data...</p>;
-    }
-
     if (error) {
         return <p>Error: {error}</p>;
     }
     return (
-        <div>
-            <h1 class="text-2xl font-bold dark:text-gray-100">
-                {tableName} Table
-            </h1>
-            {/* Edit and Save buttons outside the table */}
-            {rows.length === 0 ? (
-                <div class="dark:text-gray-100 container border text-center">
-                    <p>Nothing to see here...Please try a different search</p>
-                </div>
-            ) : (
-                <>
-                    {searchQuery === '' && (
-                        <div class="dark:text-gray-100 ">
-                            {!isEditing ? (
-                                <button
-                                    class="dark:bg-gray-700"
-                                    onClick={handleEdit}
-                                >
-                                    Edit
-                                </button>
-                            ) : (
-                                <>
-                                    <button
-                                        class="dark:bg-gray-700"
-                                        onClick={handleSave}
-                                    >
-                                        Save
-                                    </button>
-                                    <button
-                                        class="dark:bg-gray-700 ml-4"
-                                        onClick={handleCancel}
-                                    >
-                                        Cancel
-                                    </button>
-                                </>
-                            )}
+        <>
+            {!loading ? (
+                <div class="fade-in fade-in-active">
+                    <h1 class="text-2xl font-bold dark:text-gray-100">
+                        {tableName} Table
+                    </h1>
+                    {/* Edit and Save buttons outside the table */}
+                    {rows.length === 0 ? (
+                        <div class="dark:text-gray-100 container border text-center">
+                            <p>
+                                Nothing to see here...Please try a different
+                                search
+                            </p>
                         </div>
-                    )}
-                    <div class="table-button-container flex relative overflow-x-auto">
-                        <table class="dark:bg-gray-800 w-full text-base text-left">
-                            <thead>
-                                <tr>
-                                    {columns.map((column) => (
-                                        <th
-                                            class="dark:text-gray-100 px-6 py-3 border border-black"
-                                            scope="col"
-                                            key={column}
+                    ) : (
+                        <>
+                            {searchQuery === '' && (
+                                <div class="dark:text-gray-100 mb-1">
+                                    {!isEditing ? (
+                                        <button
+                                            class="dark:bg-gray-700 bg-gray-100 rounded px-1"
+                                            onClick={handleEdit}
                                         >
-                                            {column}
-                                        </th>
-                                    ))}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {rows.map((row) => (
-                                    <tr
-                                        class="bg-white dark:bg-gray-700 dark:text-gray-100 border border-black"
-                                        key={row[primaryKey]}
-                                    >
-                                        {Object.keys(row).map((column) => (
-                                            <td
-                                                class="px-6 py-4 border-r border-black"
-                                                key={column}
+                                            Edit
+                                        </button>
+                                    ) : (
+                                        <>
+                                            <button
+                                                class="dark:bg-gray-700 bg-gray-100 rounded px-1"
+                                                onClick={handleSave}
                                             >
-                                                {isEditing ? (
-                                                    <input
-                                                        class="dark:bg-gray-800"
-                                                        type="text"
-                                                        value={
-                                                            editedRows[
-                                                                row[primaryKey]
-                                                            ]?.[column] ||
-                                                            row[column]
-                                                        }
-                                                        onChange={(e) =>
-                                                            handleInputChange(
-                                                                e,
-                                                                row[primaryKey],
-                                                                column
-                                                            )
-                                                        }
-                                                    />
-                                                ) : (
-                                                    row[column]
-                                                )}
-                                            </td>
-                                        ))}
-                                    </tr>
-                                ))}
-                                {/* Render new rows when in editing mode */}
-                                {isEditing &&
-                                    newRows.map((newRow, newRowIndex) => (
-                                        <tr
-                                            class="bg-gray-100 border border-black"
-                                            key={`new-row-${newRowIndex}`}
-                                        >
+                                                Save
+                                            </button>
+                                            <button
+                                                class="dark:bg-gray-700 bg-gray-100 ml-4 rounded px-1"
+                                                onClick={handleCancel}
+                                            >
+                                                Cancel
+                                            </button>
+                                        </>
+                                    )}
+                                </div>
+                            )}
+                            <div class="table-button-container flex relative overflow-x-auto">
+                                <table class="dark:bg-gray-800 w-full text-base text-left">
+                                    <thead>
+                                        <tr>
                                             {columns.map((column) => (
-                                                <td
-                                                    class="px-6 py-4 border-r border-black"
-                                                    key={`${column}-${newRowIndex}`}
+                                                <th
+                                                    class="dark:text-gray-100 px-6 py-3 border border-black"
+                                                    scope="col"
+                                                    key={column}
                                                 >
-                                                    <input
-                                                        type="text"
-                                                        value={
-                                                            newRow[column] || ''
-                                                        }
-                                                        onChange={(e) =>
-                                                            handleInputChange(
-                                                                e,
-                                                                newRowIndex,
-                                                                column,
-                                                                true
-                                                            )
-                                                        }
-                                                    />
-                                                </td>
+                                                    {column}
+                                                </th>
                                             ))}
                                         </tr>
-                                    ))}
-                            </tbody>
-                            {isEditing && (
-                                <tfoot>
-                                    <tr>
-                                        <td
-                                            colSpan={columns.length}
-                                            class="border border-black"
-                                        >
-                                            <button
-                                                class="w-full rounded-none"
-                                                onClick={handleAddRow}
+                                    </thead>
+                                    <tbody>
+                                        {rows.map((row) => (
+                                            <tr
+                                                class="bg-white dark:bg-gray-700 dark:text-gray-100 border border-black"
+                                                key={row[primaryKey]}
                                             >
-                                                +
-                                            </button>
-                                        </td>
-                                    </tr>
-                                </tfoot>
-                            )}
-                        </table>
+                                                {Object.keys(row).map(
+                                                    (column) => (
+                                                        <td
+                                                            class="px-6 py-4 border-r border-black"
+                                                            key={column}
+                                                        >
+                                                            {isEditing ? (
+                                                                <input
+                                                                    class="dark:bg-gray-800"
+                                                                    type="text"
+                                                                    value={
+                                                                        editedRows[
+                                                                            row[
+                                                                                primaryKey
+                                                                            ]
+                                                                        ]?.[
+                                                                            column
+                                                                        ] ||
+                                                                        row[
+                                                                            column
+                                                                        ]
+                                                                    }
+                                                                    onChange={(
+                                                                        e
+                                                                    ) =>
+                                                                        handleInputChange(
+                                                                            e,
+                                                                            row[
+                                                                                primaryKey
+                                                                            ],
+                                                                            column
+                                                                        )
+                                                                    }
+                                                                />
+                                                            ) : (
+                                                                row[column]
+                                                            )}
+                                                        </td>
+                                                    )
+                                                )}
+                                            </tr>
+                                        ))}
+                                        {/* Render new rows when in editing mode */}
+                                        {isEditing &&
+                                            newRows.map(
+                                                (newRow, newRowIndex) => (
+                                                    <tr
+                                                        class="bg-gray-100 border border-black"
+                                                        key={`new-row-${newRowIndex}`}
+                                                    >
+                                                        {columns.map(
+                                                            (column) => (
+                                                                <td
+                                                                    class="px-6 py-4 border-r border-black"
+                                                                    key={`${column}-${newRowIndex}`}
+                                                                >
+                                                                    <input
+                                                                        type="text"
+                                                                        value={
+                                                                            newRow[
+                                                                                column
+                                                                            ] ||
+                                                                            ''
+                                                                        }
+                                                                        onChange={(
+                                                                            e
+                                                                        ) =>
+                                                                            handleInputChange(
+                                                                                e,
+                                                                                newRowIndex,
+                                                                                column,
+                                                                                true
+                                                                            )
+                                                                        }
+                                                                    />
+                                                                </td>
+                                                            )
+                                                        )}
+                                                    </tr>
+                                                )
+                                            )}
+                                    </tbody>
+                                    {isEditing && (
+                                        <tfoot>
+                                            <tr>
+                                                <td
+                                                    colSpan={columns.length}
+                                                    class="border border-black h-full "
+                                                >
+                                                    <button
+                                                        class="text-2xl py-4 w-full rounded-none justify-items-center dark:text-gray-100"
+                                                        onClick={handleAddRow}
+                                                    >
+                                                        <FaRegSquarePlus />
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        </tfoot>
+                                    )}
+                                </table>
 
-                        {isEditing && (
-                            <button
-                                class="px-6 rounded-none border-0 border-r-2 border-t border-b border-solid border-black"
-                                onClick={handleOpenModal}
-                            >
-                                +
-                            </button>
-                        )}
-                    </div>
-                </>
+                                {isEditing && (
+                                    <button
+                                        class="text-2xl px-6 rounded-none border-0 border-r border-t border-b border-solid border-black dark:text-gray-100 dark:hover:bg-blue-600 dark:bg-gray-800"
+                                        onClick={handleOpenModal}
+                                    >
+                                        <FaRegSquarePlus />
+                                    </button>
+                                )}
+                            </div>
+                        </>
+                    )}
+                    {/* Conditionally render modals */}
+                    {showSaveModal && (
+                        <SaveConfirmationModal
+                            onConfirm={confirmSave}
+                            onCancel={() => setShowSaveModal(false)}
+                        />
+                    )}
+                    {showCancelModal && (
+                        <CancelConfirmationModal
+                            onConfirm={confirmCancel}
+                            onCancel={() => setShowCancelModal(false)}
+                        />
+                    )}
+                    {/* AddColumnModal component */}
+                    {isModalOpen && (
+                        <AddColumnModal
+                            onClose={handleCloseModal}
+                            onAddColumn={handleAddColumn}
+                        />
+                    )}
+                </div>
+            ) : (
+                <InteractiveTableSkeleton />
             )}
-
-            {/* AddColumnModal component */}
-            {isModalOpen && (
-                <AddColumnModal
-                    onClose={handleCloseModal}
-                    onAddColumn={handleAddColumn}
-                />
-            )}
-        </div>
+        </>
     );
 };
 

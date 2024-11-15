@@ -7,7 +7,7 @@ export async function fetchData(
     offset,
     setRows,
     setColumns,
-    setTotalResults,
+    onTotalResultsChange,
     setLoading,
     setError,
     originalRowsRef,
@@ -32,7 +32,7 @@ export async function fetchData(
             setRows(response.data.rows);
             if (response.data.rows.length > 0)
                 setColumns(Object.keys(response.data.rows[0]));
-            setTotalResults(response.data.totalCount);
+            onTotalResultsChange(response.data.totalCount);
             // } else if (originalRowsRef.current && originalRowsRef.current.length) {
             //     setRows(originalRowsRef.current);
             //     setColumns(Object.keys(originalRowsRef.current[0]));
@@ -49,10 +49,9 @@ export async function fetchData(
 
             setRows(response.data.rows);
             setColumns(Object.keys(response.data.rows[0]));
-            setTotalResults(response.data.totalCount);
+            onTotalResultsChange(response.data.totalCount);
             originalRowsRef.current = response.data.rows;
         }
-
         setLoading(false);
         setError(null);
     } catch (err) {

@@ -32,13 +32,13 @@ const PageSelector = ({ totalResults, onPageChange }) => {
         }
     }, [totalResults]);
     return (
-        <div class="page-selector">
-            <div>
+        <div class="page-selector mt-1">
+            <div class="relative mb-1">
                 <label class="dark:text-gray-100" htmlFor="limit">
                     Results per page:{' '}
                 </label>
                 <select
-                    id="dark:text-black limit"
+                    class="dark:text-gray-100 dark:bg-gray-700 bg-gray-100 limit rounded"
                     value={limit}
                     onChange={handleLimitChange}
                 >
@@ -47,23 +47,26 @@ const PageSelector = ({ totalResults, onPageChange }) => {
                     <option value={20}>20</option>
                     <option value={50}>50</option>
                 </select>
+                <label class="dark:text-gray-100 float-right">
+                    Total Results: {totalResults}
+                </label>
             </div>
 
             <div>
                 <button
-                    class="dark:bg-gray-700 dark:text-gray-100 page-selector-btn pr-1"
+                    class="dark:bg-gray-700 bg-gray-100 dark:text-gray-100 page-selector-btn px-1"
                     onClick={() => handlePageChange(page - 1)}
                     disabled={page === 1}
                 >
                     Previous
                 </button>
 
-                <span class="dark:text-gray-100 page-number">
+                <span class="dark:text-gray-100 page-number px-1">
                     Page {page} of {totalPages}
                 </span>
 
                 <button
-                    class="dark:bg-gray-700 dark:text-gray-100 page-selector-btn pl-1"
+                    class="dark:bg-gray-700 bg-gray-100 dark:text-gray-100 page-selector-btn px-1"
                     onClick={() => handlePageChange(page + 1)}
                     disabled={totalPages === 0 || page === totalPages}
                 >
