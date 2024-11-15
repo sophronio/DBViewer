@@ -14,6 +14,8 @@ const InteractiveTable = ({
     limit,
     offset,
     searchQuery,
+    setHasUnsavedChanges,
+    hasUnsavedChanges,
 }) => {
     // loading + error
     const [loading, setLoading] = useState(true);
@@ -35,19 +37,21 @@ const InteractiveTable = ({
     // save & cancel modal
     const [showSaveModal, setShowSaveModal] = useState(false);
     const [showCancelModal, setShowCancelModal] = useState(false);
-    const [isUnsavedChanges, setIsUnsavedChanges] = useState(false); // Track unsaved changes
+    // const [isUnsavedChanges, setIsUnsavedChanges] = useState(false); // Track unsaved changes
 
     // Detect unsaved changes
     useEffect(() => {
-        setIsUnsavedChanges(
-            Object.keys(editedRows).length > 0 || newRows.length > 0
-        );
-    }, [editedRows, newRows]);
+        const newUnsavedChanges =
+            Object.keys(editedRows).length > 0 || newRows.length > 0;
+        if (newUnsavedChanges !== hasUnsavedChanges) {
+            setHasUnsavedChanges(newUnsavedChanges);
+        }
+    }, [editedRows, newRows, setHasUnsavedChanges, hasUnsavedChanges]);
 
     // Warn user on page refresh or tab close
     useEffect(() => {
         const handleBeforeUnload = (event) => {
-            if (isUnsavedChanges) {
+            if (hasUnsavedChanges) {
                 const message =
                     'You have unsaved changes. If you leave, your changes will be lost.';
                 event.returnValue = message; // Standard for most browsers
@@ -60,7 +64,7 @@ const InteractiveTable = ({
         return () => {
             window.removeEventListener('beforeunload', handleBeforeUnload);
         };
-    }, [isUnsavedChanges]);
+    }, [hasUnsavedChanges]);
 
     // search querying
     // const [isSearching, setIsSearching] = useState(false);
@@ -78,8 +82,18 @@ const InteractiveTable = ({
             originalRowsRef,
             searchQuery
         );
-        setIsEditing(false); // stop editing when user changes table
-    }, [searchQuery, limit, offset, tableName, onTotalResultsChange]);
+        // setEditedRows({});
+        if (!hasUnsavedChanges) {
+            setIsEditing(false); // stop editing when user changes table
+        }
+    }, [
+        searchQuery,
+        limit,
+        offset,
+        tableName,
+        onTotalResultsChange,
+        hasUnsavedChanges,
+    ]);
 
     // Get the primary key
     const primaryKey = rows.length > 0 ? getPrimaryKey(columns) : null;
@@ -97,7 +111,7 @@ const InteractiveTable = ({
 
     // Cancel edits and revert the table to the original rows
     const handleCancel = () => {
-        if (isUnsavedChanges) {
+        if (hasUnsavedChanges) {
             setShowCancelModal(true);
         } else {
             confirmCancel();
@@ -113,29 +127,55 @@ const InteractiveTable = ({
     };
 
     // Handle value input
-    const handleInputChange = (e, rowId, column, isNewRow = false) => {
-        if (isNewRow) {
-            const updatedNewRows = [...newRows];
-            updatedNewRows[rowId][column] = e.target.value;
-            setNewRows(updatedNewRows);
-        } else {
-            setEditedRows((prevEditedRows) => ({
+    // const handleInputChange = (e, rowId, column, isNewRow = false) => {
+    //     if (isNewRow) {
+    //         const updatedNewRows = [...newRows];
+    //         updatedNewRows[rowId][column] = e.target.value;
+    //         setNewRows(updatedNewRows);
+    //     } else {
+    //         setEditedRows((prevEditedRows) => ({
+    //             ...prevEditedRows,
+    //             [rowId]: {
+    //                 ...prevEditedRows[rowId],
+    //                 [column]: e.target.value,
+    //             },
+    //         }));
+    //     }
+
+    //     // Reflect the edits in the table visually without modifying the originalRowsRef
+    //     setRows((prevRows) =>
+    //         prevRows.map((row) =>
+    //             row[primaryKey] === rowId
+    //                 ? { ...row, [column]: e.target.value }
+    //                 : row
+    //         )
+    //     );
+    // };
+    const handleInputChange = (e, rowId, column) => {
+        const value = e.target.value;
+
+        // Update the editedRows state
+        setEditedRows((prevEditedRows) => {
+            const updatedEditedRows = {
                 ...prevEditedRows,
                 [rowId]: {
                     ...prevEditedRows[rowId],
-                    [column]: e.target.value,
+                    [column]: value, // Update the user_id here
                 },
-            }));
-        }
+            };
 
-        // Reflect the edits in the table visually without modifying the originalRowsRef
-        setRows((prevRows) =>
-            prevRows.map((row) =>
+            console.log('Updated editedRows:', updatedEditedRows);
+            return updatedEditedRows;
+        });
+
+        // Update rows to reflect the new value immediately
+        setRows((prevRows) => {
+            return prevRows.map((row) =>
                 row[primaryKey] === rowId
-                    ? { ...row, [column]: e.target.value }
+                    ? { ...row, [column]: value } // Ensure the row gets updated here
                     : row
-            )
-        );
+            );
+        });
     };
 
     const handleSave = () => {
@@ -257,7 +297,7 @@ const InteractiveTable = ({
     };
 
     if (error) {
-        return <p>Error: {error}</p>;
+        return <p class="text-red-500">Error: {error}</p>;
     }
     return (
         <>
@@ -313,26 +353,30 @@ const InteractiveTable = ({
                                                     scope="col"
                                                     key={column}
                                                 >
-                                                    {column}
+                                                    {column === primaryKey
+                                                        ? column + ' (PK)'
+                                                        : column}
                                                 </th>
                                             ))}
                                         </tr>
                                     </thead>
-                                    <tbody>
-                                        {rows.map((row) => (
+                                    {/* <tbody>
+                                        {rows.map((row, index) => (
                                             <tr
                                                 class="bg-white dark:bg-gray-700 dark:text-gray-100 border border-black"
-                                                key={row[primaryKey]}
+                                                key={row[primaryKey] - index}
                                             >
                                                 {Object.keys(row).map(
                                                     (column) => (
                                                         <td
                                                             class="px-6 py-4 border-r border-black"
-                                                            key={column}
+                                                            key={column + row}
                                                         >
-                                                            {isEditing ? (
+                                                            {isEditing &&
+                                                            column !==
+                                                                primaryKey ? ( // Only enable input for non-primary key columns
                                                                 <input
-                                                                    class="dark:bg-gray-800"
+                                                                    className="dark:bg-gray-800"
                                                                     type="text"
                                                                     value={
                                                                         editedRows[
@@ -353,20 +397,21 @@ const InteractiveTable = ({
                                                                             e,
                                                                             row[
                                                                                 primaryKey
-                                                                            ],
+                                                                            ] -
+                                                                                index,
                                                                             column
                                                                         )
                                                                     }
                                                                 />
                                                             ) : (
-                                                                row[column]
+                                                                row[column] // For the primary key, just display the value (no input)
                                                             )}
                                                         </td>
                                                     )
                                                 )}
                                             </tr>
                                         ))}
-                                        {/* Render new rows when in editing mode */}
+
                                         {isEditing &&
                                             newRows.map(
                                                 (newRow, newRowIndex) => (
@@ -405,7 +450,67 @@ const InteractiveTable = ({
                                                     </tr>
                                                 )
                                             )}
+                                    </tbody> */}
+                                    <tbody>
+                                        {rows.map((row) => (
+                                            <tr
+                                                key={row[primaryKey]} // Ensure the primaryKey is used as the key for each row
+                                                className="bg-white dark:bg-gray-700 dark:text-gray-100 border border-black"
+                                            >
+                                                {Object.keys(row).map(
+                                                    (column) => (
+                                                        <td
+                                                            className="px-6 py-4 border-r border-black"
+                                                            key={column}
+                                                        >
+                                                            {isEditing &&
+                                                            column !==
+                                                                primaryKey ? (
+                                                                <input
+                                                                    className="dark:bg-gray-800"
+                                                                    type="text"
+                                                                    value={
+                                                                        editedRows[
+                                                                            row[
+                                                                                primaryKey
+                                                                            ]
+                                                                        ]?.[
+                                                                            column
+                                                                        ] !==
+                                                                        undefined
+                                                                            ? editedRows[
+                                                                                  row[
+                                                                                      primaryKey
+                                                                                  ]
+                                                                              ]?.[
+                                                                                  column
+                                                                              ]
+                                                                            : row[
+                                                                                  column
+                                                                              ] // If editedRows is undefined or empty, fallback to original value
+                                                                    }
+                                                                    onChange={(
+                                                                        e
+                                                                    ) =>
+                                                                        handleInputChange(
+                                                                            e,
+                                                                            row[
+                                                                                primaryKey
+                                                                            ],
+                                                                            column
+                                                                        )
+                                                                    } // Pass rowId and column
+                                                                />
+                                                            ) : (
+                                                                row[column]
+                                                            )}
+                                                        </td>
+                                                    )
+                                                )}
+                                            </tr>
+                                        ))}
                                     </tbody>
+
                                     {isEditing && (
                                         <tfoot>
                                             <tr>

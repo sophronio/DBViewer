@@ -11,26 +11,26 @@ const Dashboard = () => {
     const [offset, setOffset] = useState(0);
     const [totalResults, setTotalResults] = useState(0);
     const [searchQuery, setSearchQuery] = useState(''); // New state for search query
-    // // Whenever totalResults changes, propagate it up to the parent
-    // useEffect(() => {
-    //     onTotalResultsChange(totalResults); // Propagate the totalResults to the parent
-    // }, [totalResults, ]);
-    // Handle component change from sidebar clicks
+    const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false); // Track unsaved changes
+
     const handleComponentChange = (componentName) => {
+        if (hasUnsavedChanges) {
+            const confirmSwitch = window.confirm(
+                'You have unsaved changes. Are you sure you want to switch tables?'
+            );
+            if (!confirmSwitch) return; // Cancel table switch
+        }
         setActiveComponent(componentName);
         setLimit(5);
         setOffset(0);
         setSearchQuery(''); // Clear the search query when switching components
+        setHasUnsavedChanges(false);
     };
 
     // Callback function to receive totalResults from InteractiveTable
     const handleTotalResults = (newTotalResults) => {
         setTotalResults(newTotalResults);
     };
-
-    // useEffect(() => {
-    //     console.log('Total Results updated:', totalResults);
-    // }, [totalResults]);
 
     const handlePageChange = (newLimit, newOffset) => {
         setLimit(newLimit);
@@ -63,6 +63,8 @@ const Dashboard = () => {
                         limit={limit}
                         offset={offset}
                         searchQuery={searchQuery} // Pass search query to the table
+                        setHasUnsavedChanges={setHasUnsavedChanges} // Pass callback to update hasUnsavedChanges
+                        hasUnsavedChanges={hasUnsavedChanges}
                     />
                     <PageSelector
                         totalResults={totalResults}
