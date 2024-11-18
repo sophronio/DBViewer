@@ -81,7 +81,7 @@ const AddColumnModal = ({ onClose, onAddColumn }) => {
                     </div>
                     {availableOptions.length > 0 && (
                         <div class="mb-4">
-                            <label class="block text-sm font-medium text-gray-700">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-100">
                                 Size:
                             </label>
                             <select

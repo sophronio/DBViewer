@@ -1,6 +1,12 @@
 const sqlKeywords = require('mssql').TYPES; // Use SQL keywords list from `mssql` package
 const { poolPromise, mssql } = require('../config/dbConfig');
-const allowedTables = ['Users', 'Activities', 'Records', 'Profile'];
+const allowedTables = [
+    'Users',
+    'Posts',
+    'Comments',
+    'Categories',
+    'Post_Categories',
+];
 // const allowedTables = [
 //     'CloudCost',
 //     'AroEnvLookup',
