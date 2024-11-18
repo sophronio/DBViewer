@@ -167,7 +167,6 @@ const InteractiveTable = ({
                     },
                 };
 
-                console.log('Updated editedRows:', updatedEditedRows);
                 return updatedEditedRows;
             });
         }
@@ -189,7 +188,6 @@ const InteractiveTable = ({
     // Save edits to database + any new rows
     const confirmSave = async () => {
         try {
-            console.log(editedRows);
             const updates = Object.entries(editedRows).map(
                 ([rowId, updatedRow]) => {
                     if (columns.includes('updated_at')) {
@@ -222,7 +220,6 @@ const InteractiveTable = ({
                 const filteredValues = filteredColumns.map(
                     (column) => newRow[column]
                 );
-                console.log(filteredColumns, filteredValues);
                 return axios.post('http://localhost:8080/add-row', {
                     tableName,
                     columns: filteredColumns,
@@ -242,7 +239,6 @@ const InteractiveTable = ({
                 setError,
                 originalRowsRef
             );
-            console.log('data refetched?');
 
             setIsEditing(false);
             setEditedRows({});
